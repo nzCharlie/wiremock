@@ -63,6 +63,7 @@ public interface Options {
     WiremockNetworkTrafficListener networkTrafficListener();
     Authenticator getAdminAuthenticator();
     boolean getHttpsRequiredForAdminApi();
+    boolean reportNearMissDisabled();
     NotMatchedRenderer getNotMatchedRenderer();
     AsynchronousResponseSettings getAsynchronousResponseSettings();
 }

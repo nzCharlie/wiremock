@@ -163,6 +163,10 @@ public class WarConfiguration implements Options {
     }
 
     @Override
+    public boolean reportNearMissDisabled() {
+        return false;
+    }
+
     public NotMatchedRenderer getNotMatchedRenderer() {
         return new PlainTextStubNotMatchedRenderer();
     }

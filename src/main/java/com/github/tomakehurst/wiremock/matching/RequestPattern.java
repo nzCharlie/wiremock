@@ -15,6 +15,20 @@
  */
 package com.github.tomakehurst.wiremock.matching;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
+import static com.github.tomakehurst.wiremock.matching.RequestMatcherExtension.NEVER;
+import static com.github.tomakehurst.wiremock.matching.RequestPatternBuilder.newRequestPattern;
+import static com.github.tomakehurst.wiremock.matching.WeightedMatchResult.weight;
+import static com.google.common.base.MoreObjects.firstNonNull;
+import static com.google.common.collect.FluentIterable.from;
+import static com.google.common.net.HttpHeaders.AUTHORIZATION;
+
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -26,20 +40,8 @@ import com.github.tomakehurst.wiremock.http.Request;
 import com.github.tomakehurst.wiremock.http.RequestMethod;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
-import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
-import static com.github.tomakehurst.wiremock.matching.RequestMatcherExtension.NEVER;
-import static com.github.tomakehurst.wiremock.matching.RequestPatternBuilder.newRequestPattern;
-import static com.github.tomakehurst.wiremock.matching.WeightedMatchResult.weight;
-import static com.google.common.base.MoreObjects.firstNonNull;
-import static com.google.common.collect.FluentIterable.from;
-import static com.google.common.net.HttpHeaders.AUTHORIZATION;
 
 public class RequestPattern implements NamedValueMatcher<Request> {
 
@@ -57,17 +59,44 @@ public class RequestPattern implements NamedValueMatcher<Request> {
 
     private final RequestMatcher defaultMatcher = new RequestMatcher() {
         @Override
-        public MatchResult match(Request request) {
-            return MatchResult.aggregateWeighted(
-                weight(url.match(request.getUrl()), 10.0),
-                weight(method.match(request.getMethod()), 3.0),
-
-                weight(allHeadersMatchResult(request)),
-                weight(allQueryParamsMatch(request)),
-                weight(allCookiesMatch(request)),
-                weight(allBodyPatternsMatch(request)),
-                weight(allMultipartPatternsMatch(request))
-            );
+        public MatchResult match(final Request request) {
+            return MatchResult.aggregateWeightedSupplier(new Supplier<WeightedMatchResult>() {
+                @Override
+                public WeightedMatchResult get() {
+                    return weight(url.match(request.getUrl()), 10.0);
+                }
+            }, new Supplier<WeightedMatchResult>() {
+                @Override
+                public WeightedMatchResult get() {
+                    return weight(method.match(request.getMethod()), 3.0);
+                }
+            }, new Supplier<WeightedMatchResult>() {
+                @Override
+                public WeightedMatchResult get() {
+                    return weight(allHeadersMatchResult(request));
+                }
+            }, new Supplier<WeightedMatchResult>() {
+                @Override
+                public WeightedMatchResult get() {
+                    return weight(allQueryParamsMatch(request));
+                }
+            }, new Supplier<WeightedMatchResult>() {
+                @Override
+                public WeightedMatchResult get() {
+                    return weight(allCookiesMatch(request));
+                }
+            }, new Supplier<WeightedMatchResult>() {
+                @Override
+                public WeightedMatchResult get() {
+                    return weight(allBodyPatternsMatch(request));
+                }
+            }, 
+               new Supplier<WeightedMatchResult>() {
+                @Override
+                public WeightedMatchResult get() {
+                    return weight(allMultipartPatternsMatch(request));
+                }
+            });
         }
 
         @Override
