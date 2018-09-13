@@ -15,15 +15,16 @@
  */
 package com.github.tomakehurst.wiremock.core;
 
-import com.github.tomakehurst.wiremock.admin.AdminTask;
 import com.github.tomakehurst.wiremock.common.*;
 import com.github.tomakehurst.wiremock.extension.Extension;
 import com.github.tomakehurst.wiremock.extension.ExtensionLoader;
 import com.github.tomakehurst.wiremock.http.CaseInsensitiveKey;
 import com.github.tomakehurst.wiremock.http.HttpServerFactory;
+import com.github.tomakehurst.wiremock.http.ThreadPoolFactory;
 import com.github.tomakehurst.wiremock.http.trafficlistener.DoNothingWiremockNetworkTrafficListener;
 import com.github.tomakehurst.wiremock.http.trafficlistener.WiremockNetworkTrafficListener;
 import com.github.tomakehurst.wiremock.jetty9.JettyHttpServerFactory;
+import com.github.tomakehurst.wiremock.jetty9.QueuedThreadPoolFactory;
 import com.github.tomakehurst.wiremock.security.Authenticator;
 import com.github.tomakehurst.wiremock.security.BasicAuthenticator;
 import com.github.tomakehurst.wiremock.security.NoAuthenticator;
@@ -75,6 +76,7 @@ public class WireMockConfiguration implements Options {
     private boolean preserveHostHeader;
     private String proxyHostHeader;
     private HttpServerFactory httpServerFactory = new JettyHttpServerFactory();
+    private ThreadPoolFactory threadPoolFactory = new QueuedThreadPoolFactory();
     private Integer jettyAcceptors;
     private Integer jettyAcceptQueueSize;
     private Integer jettyHeaderBufferSize;
@@ -88,6 +90,8 @@ public class WireMockConfiguration implements Options {
     private boolean reportNearMissDisabled = false;
 
     private NotMatchedRenderer notMatchedRenderer = new PlainTextStubNotMatchedRenderer();
+    private boolean asynchronousResponseEnabled;
+    private int asynchronousResponseThreads;
 
     private MappingsSource getMappingsSource() {
         if (mappingsSource == null) {
@@ -288,6 +292,11 @@ public class WireMockConfiguration implements Options {
         return this;
     }
 
+    public WireMockConfiguration threadPoolFactory(ThreadPoolFactory threadPoolFactory) {
+        this.threadPoolFactory = threadPoolFactory;
+        return this;
+    }
+
     public WireMockConfiguration networkTrafficListener(WiremockNetworkTrafficListener networkTrafficListener) {
         this.networkTrafficListener = networkTrafficListener;
         return this;
@@ -314,6 +323,16 @@ public class WireMockConfiguration implements Options {
     
     public WireMockConfiguration notMatchedRenderer(NotMatchedRenderer notMatchedRenderer) {
         this.notMatchedRenderer = notMatchedRenderer;
+        return this;
+    }
+
+    public WireMockConfiguration asynchronousResponseEnabled(boolean asynchronousResponseEnabled) {
+        this.asynchronousResponseEnabled = asynchronousResponseEnabled;
+        return this;
+    }
+
+    public WireMockConfiguration asynchronousResponseThreads(int asynchronousResponseThreads) {
+        this.asynchronousResponseThreads = asynchronousResponseThreads;
         return this;
     }
 
@@ -407,6 +426,11 @@ public class WireMockConfiguration implements Options {
     }
 
     @Override
+    public ThreadPoolFactory threadPoolFactory() {
+        return threadPoolFactory;
+    }
+
+    @Override
     public boolean shouldPreserveHostHeader() {
         return preserveHostHeader;
     }
@@ -445,4 +469,10 @@ public class WireMockConfiguration implements Options {
     public NotMatchedRenderer getNotMatchedRenderer() {
         return notMatchedRenderer;
     }
+
+    @Override
+    public AsynchronousResponseSettings getAsynchronousResponseSettings() {
+        return new AsynchronousResponseSettings(asynchronousResponseEnabled, asynchronousResponseThreads);
+    }
+
 }
