@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
-import static com.github.tomakehurst.wiremock.verification.Diff.junitStyleDiffMessage;
+import static com.github.tomakehurst.wiremock.verification.diff.JUnitStyleDiffRenderer.junitStyleDiffMessage;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 
@@ -79,11 +79,11 @@ public class NearMissesRuleAcceptanceTest {
             client.post("/a-near-mis", new StringEntity(""));
 
             assertThat(testNotifier.getErrorMessages(), hasItem(allOf(
-                containsString("Request was not matched:"),
+                containsString("Request was not matched"),
                 containsString("/a-near-mis"),
-
-                containsString("Closest match:"),
-                containsString("/near-miss")
+                containsString("/near-miss"),
+                containsString("HTTP method does not match"),
+                containsString("URL does not match")
                 )
             ));
         }

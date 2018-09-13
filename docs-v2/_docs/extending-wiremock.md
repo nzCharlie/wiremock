@@ -221,9 +221,9 @@ wireMockServer.stubFor(requestMatching(new RequestMatcherExtension() {
 
 To use it in a verification :
 ```java
-WireMock.verify(RequestPatternBuilder.forCustomMatcher(new RequestMatcherExtension() {
+verify(2, requestMadeFor(new ValueMatcher<Request>() {
     @Override
-    public MatchResult match(Request request, Parameters parameters) {
+    public MatchResult match(Request value) {
         return MatchResult.of(request.getBody().length > 2048);
     }
 }));
@@ -261,7 +261,7 @@ public class BodyLengthMatcher extends RequestMatcherExtension {
 Then define a stub with it:
 
 ```java
-stubFor(requestMatching("body-too-long", Parameters.one("maxLemgth", 2048))
+stubFor(requestMatching("body-too-long", Parameters.one("maxLength", 2048))
         .willReturn(aResponse().withStatus(422)));
 ```
 
@@ -273,7 +273,7 @@ or via JSON:
         "customMatcher" : {
             "name" : "body-too-long",
             "parameters" : {
-                "maxLemgth" : 2048
+                "maxLength" : 2048
             }
         }
     },
